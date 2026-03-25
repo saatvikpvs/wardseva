@@ -25,18 +25,19 @@ const provider = new GoogleAuthProvider();
 useEffect(() => {
   if (!window.recaptchaVerifier) {
     window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
       "recaptcha-container",
       {
         size: "invisible",
         callback: () => {
           console.log("reCAPTCHA verified");
         }
-      }
+      },
+      auth
     );
+
+    window.recaptchaVerifier.render();
   }
 }, []);
-
   async function sendOTP() {
     if (phone.length !== 10) {
       setError("Enter a valid 10-digit mobile number");
