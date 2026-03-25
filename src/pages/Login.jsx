@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase.js";
@@ -17,7 +20,7 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-
+const provider = new GoogleAuthProvider();
   // Initialize reCAPTCHA
   useEffect(() => {
     if (!window.recaptchaVerifier) {
@@ -92,7 +95,25 @@ export default function Login() {
 
     setLoading(false);
   }
+async function loginWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+
+    if (!userDoc.exists()) {
+      navigate("/register");
+    } else {
+      const data = userDoc.data();
+      navigate(data.isAdmin ? "/admin" : "/dashboard");
+    }
+
+  } catch (err) {
+    console.error(err);
+    setError("Google login failed");
+  }
+}
   return (
     <>
       <Topbar />
@@ -195,8 +216,19 @@ export default function Login() {
               </button>
             </>
           )}
-
-          <p
+<button
+  className="btn btf"
+  onClick={loginWithGoogle}
+  style={{
+    marginTop: "12px",
+    background: "#4285F4",
+    color: "white",
+    width: "100%"
+  }}
+>
+  Login with Google
+</button>
+<p
             style={{
               textAlign: "center",
               fontSize: "13px",
