@@ -1,0 +1,70 @@
+// ============================================================
+// firestore.rules — WardSeva Security Rules
+//
+// HOW TO USE:
+// 1. Go to Firebase console → Firestore → Rules tab
+// 2. Replace everything with the rules below
+// 3. Click Publish
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is logged in
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user is admin
+    function isAdmin() {
+      return isLoggedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Helper: check if user belongs to this ward
+    function isSameWard(wardNumber) {
+      return isLoggedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.wardNumber == wardNumber;
+    }
+
+    // USERS — users can read/write their own profile, admin can read all
+    match /users/{userId} {
+      allow read: if isLoggedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isLoggedIn() && request.auth.uid == userId;
+      allow update: if isLoggedIn() && request.auth.uid == userId;
+    }
+
+    // COMPLAINTS — anyone in the ward can read, only logged-in users can create
+    match /complaints/{complaintId} {
+      allow read: if isLoggedIn();
+      allow create: if isLoggedIn();
+      allow update: if isLoggedIn() && (
+        // The person who raised it can update (confirm/reopen)
+        resource.data.raisedBy == request.auth.uid ||
+        // Admin can update (assign, resolve)
+        isAdmin() ||
+        // Anyone logged in can update supportCount (supporting)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['supporters', 'supportCount'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // POSTS — ward members can read ward posts, logged-in users can create
+    match /posts/{postId} {
+      allow read: if isLoggedIn();
+      allow create: if isLoggedIn();
+      allow update: if isLoggedIn() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // NOTIFICATIONS — users can only read their own notifications
+    match /notifications/{notifId} {
+      allow read: if isLoggedIn() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isLoggedIn();
+      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,31 @@
+// ============================================================
+// storage.rules — WardSeva Storage Security Rules
+//
+// HOW TO USE:
+// 1. Go to Firebase console → Storage → Rules tab
+// 2. Replace everything with the rules below
+// 3. Click Publish
+// ============================================================
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Complaint photos — only logged-in users can upload, anyone logged in can read
+    match /complaints/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 10 * 1024 * 1024  // max 10 MB
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Repair photos uploaded by admin
+    match /repairs/{complaintId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
