@@ -23,22 +23,20 @@ export default function Login() {
 const provider = new GoogleAuthProvider();
   // Initialize reCAPTCHA
 useEffect(() => {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {
-          console.log("reCAPTCHA verified");
-        }
-      },
-      auth
-    );
+  try {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        { size: "invisible" },
+        auth
+      );
 
-    window.recaptchaVerifier.render();
+      window.recaptchaVerifier.render();
+    }
+  } catch (error) {
+    console.error("Recaptcha error:", error);
   }
-}, []);
-  async function sendOTP() {
+}, []);  async function sendOTP() {
     if (phone.length !== 10) {
       setError("Enter a valid 10-digit mobile number");
       return;
