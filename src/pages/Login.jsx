@@ -22,22 +22,20 @@ export default function Login() {
   const navigate = useNavigate();
 const provider = new GoogleAuthProvider();
   // Initialize reCAPTCHA
-  useEffect(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        "recaptcha-container",
-        {
-          size: "invisible",
-          callback: () => {
-            console.log("reCAPTCHA verified");
-          }
-        },
-        auth
-      );
-
-      window.recaptchaVerifier.render();
-    }
-  }, []);
+useEffect(() => {
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: () => {
+          console.log("reCAPTCHA verified");
+        }
+      }
+    );
+  }
+}, []);
 
   async function sendOTP() {
     if (phone.length !== 10) {
